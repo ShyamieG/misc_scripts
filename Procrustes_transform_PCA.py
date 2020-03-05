@@ -6,6 +6,7 @@
 ##         --sample_list (a list of samples to drop in, having at least the first two columns of the .fam file)
 ## OPTIONAL ARGUMENTS:
 ##         --drop_missing_data (should SNPs not present in the sample being dropped in be removed when doing the PCA? default True)
+##         --make_pseudohap (should reference samples be made pseudohaploid, default False)
 ##         --n_eigs (number of eigenvalues to compute, default 6)
 ##         --LD_winsize (window size in SNPs - to pass to PLINK for indep-pairwise LD filter)
 ##         --LD_stepsize (step size in SNPs - to pass to PLINK for indep-pairwise LD filter)
@@ -18,11 +19,10 @@
 #! /usr/bin/env python
 import argparse as ap
 import os
+import sys
+
 import pandas as pd
 import numpy as np
-import sys
-import random
-from random import shuffle
 
 ### Define main function
 def main(args):
@@ -31,6 +31,7 @@ def main(args):
     argp.add_argument("--bfile", required=True)
     argp.add_argument("--sample_list", required=True)
     argp.add_argument("--drop_missing_data", default=True, type=bool)
+    argp.add_argument("--make_pseudohap", default=False, type=bool)
     argp.add_argument("--n_eigs", default=6, type=int)
     argp.add_argument("--LD_winsize", type=int, required=False)
     argp.add_argument("--LD_stepsize", type=int, required=False)
@@ -41,15 +42,43 @@ def main(args):
     ## Perform a PCA for each dropped in individual
     all_samples = pd.read_csv(args.bfile + ".fam", sep="\s+", header=None)
     dropin_samples = pd.read_csv(args.sample_list, sep="\s+", header=None)
-    ind_ref = []
+    idx_ref = []
     dropin_samp_concatIDs = (dropin_samples.loc[0:,0] + dropin_samples.loc[0:,1]).values.tolist()
     all_samp_concatIDs = (all_samples.loc[0:,0] + all_samples.loc[0:,1]).values.tolist()
     for i in all_samp_concatIDs:
         if i not in dropin_samp_concatIDs:
-            ind_ref.append(all_samp_concatIDs.index(i))
+            idx_ref.append(all_samp_concatIDs.index(i))
 
-    ref_samples = all_samples.iloc[ind_ref,]
+    ref_samples = all_samples.iloc[idx_ref,]
     
+    if args.make_pseudohap == True:
+        import pandas_plink as pdp
+        import random
+        bedfile = pdp.read_plink1_bin(".TEMP.bed")
+        for ind_idx in range(bedfile.shape[0]):
+            genos = bedfile.sel(sample=bedfile.sample.values[ind_idx]).values.tolist()
+            for g in (np.where(np.array(genos)==1)[0][0:]):
+                genos[g] = float(np.array(random.sample([0., 2.], k=1)))
+            alleles = [0] * len(genos)
+            for n in range(len(genos)):
+                if genos[n]==0.:
+                    alleles[n] = bedfile.a0.values[n]
+                elif genos[n]==2.:
+                    alleles[n] = bedfile.a1.values[n]
+            IND_ped = [bedfile.fid.values[ind_idx].tolist()] + [bedfile.iid.values[ind_idx].tolist()] + [bedfile.father.values[ind_idx].tolist()] + [bedfile.mother.values[ind_idx].tolist()] + [bedfile.gender.values[ind_idx].tolist()] + [str(bedfile.trait.values[ind_idx].tolist())] + [x for pair in zip(alleles, alleles) for x in pair]
+            if ind_idx==0:
+                with open(str(args.bfile) + "_pseudoHap.ped", "w") as pedfile:
+                    pedfile.write("%s" % " ".join(map(str, IND_ped)))
+            else:
+                with open(str(args.bfile) + "_pseudoHap.ped", "a") as pedfile:
+                    pedfile.write("\n" + "%s" % " ".join(map(str, IND_ped)))
+        os.system("awk \'{print $1, $2, $3, $4}\' " + args.bfile + ".bim > " + args.bfile + "_pseudoHap.map")
+        args.bfile = args.bfile + "_pseudoHap"
+        os.system("plink2 --file " + args.bfile + " --make-bed --out " + args.bfile)
+        os.system("rm " + args.bfile + ".ped")
+        os.system("rm " + args.bfile + ".map")
+
+    # Modify to run in parallel?
     os.system("echo sample_ID n_SNPs > dropInSamplesInfo")
     for i in range(len(dropin_samples)):
         # Make files for individual i
