@@ -40,8 +40,9 @@ def main(args):
     args = argp.parse_args(args)
 
     ## Perform a PCA for each dropped in individual
-    all_samples = pd.read_csv(args.bfile + ".fam", sep="\s+", header=None)
-    dropin_samples = pd.read_csv(args.sample_list, sep="\s+", header=None)
+    print("Parsing input...")
+    all_samples = pd.read_csv(str(args.bfile) + ".fam", sep="\s+", header=None)
+    dropin_samples = pd.read_csv(str(args.sample_list), sep="\s+", header=None)
     idx_ref = []
     dropin_samp_concatIDs = (dropin_samples.loc[0:,0] + dropin_samples.loc[0:,1]).values.tolist()
     all_samp_concatIDs = (all_samples.loc[0:,0] + all_samples.loc[0:,1]).values.tolist()
@@ -52,10 +53,12 @@ def main(args):
     ref_samples = all_samples.iloc[idx_ref,]
     
     if args.make_pseudohap == True:
+        print("Making all samples pseudo-haploid...")
         import pandas_plink as pdp
         import random
         bedfile = pdp.read_plink1_bin(".TEMP.bed")
         for ind_idx in range(bedfile.shape[0]):
+            print("    working on sample " + str(bedfile.iid.values[ind_idx]) + " (" + str(ind_idx+1) + "/" + str(bedfile.shape[0]) + ")")
             genos = bedfile.sel(sample=bedfile.sample.values[ind_idx]).values.tolist()
             for g in (np.where(np.array(genos)==1)[0][0:]):
                 genos[g] = float(np.array(random.sample([0., 2.], k=1)))
@@ -72,28 +75,30 @@ def main(args):
             else:
                 with open(str(args.bfile) + "_pseudoHap.ped", "a") as pedfile:
                     pedfile.write("\n" + "%s" % " ".join(map(str, IND_ped)))
-        os.system("awk \'{print $1, $2, $3, $4}\' " + args.bfile + ".bim > " + args.bfile + "_pseudoHap.map")
-        args.bfile = args.bfile + "_pseudoHap"
-        os.system("plink2 --file " + args.bfile + " --make-bed --out " + args.bfile)
-        os.system("rm " + args.bfile + ".ped")
-        os.system("rm " + args.bfile + ".map")
+        os.system("awk \'{print $1, $2, $3, $4}\' " + str(args.bfile)+ ".bim > " + str(args.bfile) + "_pseudoHap.map")
+        args.bfile = str(args.bfile) + "_pseudoHap"
+        os.system("plink2 --file " + str(args.bfile) + " --make-bed --out " + str(args.bfile))
+        os.system("rm " + str(args.bfile) + ".ped")
+        os.system("rm " + str(args.bfile)+ ".map")
 
     # Modify to run in parallel?
     os.system("echo sample_ID n_SNPs > dropInSamplesInfo")
+    print("Doing individual PCAs...")
     for i in range(len(dropin_samples)):
         # Make files for individual i
         IND_df = dropin_samples.iloc[i:i+1,]
         ind = IND_df.iloc[0,1]
+        print("    working on sample " + str(ind) + "...")
         rem_df = dropin_samples.drop(i)
         rem_df.to_csv(".REM.list", sep=" ", index=False, header=False)
         if args.drop_missing_data == True:
             # Keep individual i, and only the SNPs typed in that individual
             IND_df.to_csv(".KEEP.list", sep=" ", index=False, header=False)
-            os.system("plink2 --bfile " + args.bfile + " --keep .KEEP.list --geno 0 --make-bed --out .KEEP")
+            os.system("plink2 --bfile " + str(args.bfile) + " --keep .KEEP.list --geno 0 --make-bed --out .KEEP")
             # Remove everyone else that needs to be dropped in, and keep only SNPs typed in individual i
-            os.system("plink2 --bfile " + args.bfile + " --remove .REM.list --extract .KEEP.bim --make-bed --out .TEMP")
+            os.system("plink2 --bfile " + str(args.bfile) + " --remove .REM.list --extract .KEEP.bim --make-bed --out .TEMP")
         else:
-            os.system("plink2 --bfile " + args.bfile + " --remove .REM.list --make-bed --out .TEMP")
+            os.system("plink2 --bfile " + str(args.bfile) + " --remove .REM.list --make-bed --out .TEMP")
         
         if (args.LD_winsize is not None) & (args.LD_stepsize is not None) & (args.LD_r2 is not None):
             os.system("plink2 --bfile .TEMP --indep-pairwise " + str(args.LD_winsize) + " " + str(args.LD_stepsize) + " " + str(args.LD_r2) + " --out .LD_filter")
@@ -127,6 +132,7 @@ def main(args):
     os.system("rm .KEEP.* .REM.list .TEMP.* .par.all .LD_filter.*")
 
     ## Run Procrustes transformation with R script, package "vegan"
+    print("Running Procrustes transformation...")
     os.system("Rscript Procrustes_transform_PCA.R " + str(args.bfile) + " " + str(args.n_eigs))
 
     return 0
