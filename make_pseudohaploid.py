@@ -25,8 +25,9 @@ def main(args):
 
     bedfile = pdp.read_plink1_bin(str(args.bfile) + ".bed")
     nInds = bedfile.shape[0]
+    outped = str(args.bfile) + "_pseudoHap.ped"
     for ind_idx in range(nInds):
-        make_pseudohap(x=ind_idx, bedfile=bedfile)
+        make_pseudohap(x=ind_idx, bedfile=bedfile, outped=outped)
     os.system("awk \'{print $1, $2, $3, $4}\' " + str(args.bfile)+ ".bim > " + str(args.bfile) + "_pseudoHap.map")
     args.bfile = str(args.bfile) + "_pseudoHap"
     os.system("plink1.9 --file " + str(args.bfile) + " --make-bed --out " + str(args.bfile))
@@ -35,7 +36,7 @@ def main(args):
     return 0
 
 ### Define 'make pseudohaploid' function
-def make_pseudohap(x, bedfile):
+def make_pseudohap(x, bedfile, outped):
     nInds=bedfile.shape[0]
     print("    working on sample " + str(bedfile.iid.values[x]) + " (" + str(x+1) + "/" + str(nInds) + ")")
     genos = bedfile.sel(sample=bedfile.sample.values[x]).values.tolist()
@@ -50,10 +51,10 @@ def make_pseudohap(x, bedfile):
             alleles[n] = bedfile.a1.values[n]
     IND_ped = bedfile.fid.values[x] + " " + bedfile.iid.values[x] + " " + bedfile.father.values[x] + " " + bedfile.mother.values[x] + " " + bedfile.gender.values[x] + " " + bedfile.trait.values[x] + str([x for pair in zip(alleles, alleles) for x in pair])
     if x==0:
-        with open(str(args.bfile) + "_pseudoHap.ped", "w") as pedfile:
+        with open(outped, "w") as pedfile:
             pedfile.write("%s" % " ".join(map(str, IND_ped)))
     else:
-        with open(str(args.bfile) + "_pseudoHap.ped", "a") as pedfile:
+        with open(outped, "a") as pedfile:
             pedfile.write("\n" + "%s" % " ".join(map(str, IND_ped)))
 
 ### Run script
