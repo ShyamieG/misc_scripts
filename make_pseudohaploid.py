@@ -49,13 +49,13 @@ def make_pseudohap(x, bedfile, outped):
             alleles[n] = bedfile.a0.values[n]
         elif genos[n]==2.:
             alleles[n] = bedfile.a1.values[n]
-    IND_ped = bedfile.fid.values[x] + " " + bedfile.iid.values[x] + " " + bedfile.father.values[x] + " " + bedfile.mother.values[x] + " " + bedfile.gender.values[x] + " " + bedfile.trait.values[x] + str([x for pair in zip(alleles, alleles) for x in pair])
+    IND_ped = bedfile.fid.values[x] + " " + bedfile.iid.values[x] + " " + bedfile.father.values[x] + " " + bedfile.mother.values[x] + " " + bedfile.gender.values[x] + " " + bedfile.trait.values[x] + str([x for pair in zip(alleles, alleles) for x in pair]).replace("["," ").replace("'","").replace(",","").replace("]","")
     if x==0:
         with open(outped, "w") as pedfile:
-            pedfile.write("%s" % " ".join(map(str, IND_ped)))
+            pedfile.write(IND_ped)
     else:
         with open(outped, "a") as pedfile:
-            pedfile.write("\n" + "%s" % " ".join(map(str, IND_ped)))
+            pedfile.write("\n" + IND_ped)
 
 ### Run script
 if __name__ == "__main__":
