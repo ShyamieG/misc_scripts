@@ -17,7 +17,7 @@ base_ind = ranked_inds[1]
 ## Write out eigenvalues for base PCA
 Header <- readLines(paste(base_ind, "_PCA.eigs", sep=""), n=1)
 Header <- unlist(strsplit(Header, split=" ")); Header <- Header[which(Header!="")]
-write.table(t(c("", Header[-1])), file=outfile, quote=F, sep=",", row.names=F, col.names=F)
+write.table(t(c("", paste("PC", 1:length(Header[-1]), "-", Header[-1], sep=""))), file=outfile, quote=F, sep=",", row.names=F, col.names=F)
 
 ## Write out base PC values, including best drop in sample
 base_PC_vals <- read.table(paste(base_ind, "_PCA.eigs", sep=""), row.names=1)[,-(n_eigs+1)]
