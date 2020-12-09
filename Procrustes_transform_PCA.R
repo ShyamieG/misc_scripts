@@ -22,7 +22,7 @@ write.table(t(c("", Header[-1])), file=outfile, quote=F, sep=",", row.names=F, c
 ## Write out base PC values, including best drop in sample
 base_PC_vals <- read.table(paste(base_ind, "_PCA.eigs", sep=""), row.names=1)[,-(n_eigs+1)]
 rownames(base_PC_vals) <- unlist(strsplit(rownames(base_PC_vals), split=":"))[seq(2, nrow(base_PC_vals)*2, 2)]
-write.table(base_PC_vals, file=outfile, quote=F, sep=",", col.names=F)
+write.table(base_PC_vals, file=outfile, quote=F, sep=",", col.names=F, append=T)
 refOnly_base_PC_vals <- base_PC_vals[-match(base_ind, rownames(base_PC_vals)),]
 
 ## Perform Procrustes transformation on the rest of the drop in samples
