@@ -2,7 +2,7 @@
 ## AUTHOR: SSG
 ## OVERVIEW: Forces sample to be pseudohaploid by randomly picking one allele at heterozygous positions
 ## USAGE EXAMPLE:
-## $ python make_pseudohap.py --bfile PCA_data
+## $ python make_pseudohaploid.py --bfile PCA_data
 
 #! /usr/bin/env python
 import argparse as ap
