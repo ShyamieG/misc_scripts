@@ -1,10 +1,7 @@
 ## SCRIPT: make_pseudohaploid.py
 ## AUTHOR: SSG
 ## OVERVIEW: Forces sample to be pseudohaploid by randomly picking one allele at heterozygous positions
-## REQUIRED ARGUMENTS:
-##         --bfile (stem of the PLINK binary file name that contains data on both reference individuals and those to be dropped)
-##
-## USAGE EXAMPLES:
+## USAGE EXAMPLE:
 ## $ python make_pseudohap.py --bfile PCA_data
 
 #! /usr/bin/env python
@@ -20,7 +17,7 @@ import numpy as np
 def main(args):
     ## Parse arguments
     argp = ap.ArgumentParser(description="")
-    argp.add_argument("--bfile", required=True)
+    argp.add_argument("--bfile", required=True, description="stem of the PLINK binary file name that contains data on both reference individuals and those to be dropped")
     args = argp.parse_args(args)
 
     bedfile = pdp.read_plink1_bin(str(args.bfile) + ".bed")
