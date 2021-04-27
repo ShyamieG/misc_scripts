@@ -21,6 +21,7 @@ def main(args):
     argp.add_argument("--sample_list", required=True, help="a list of samples to drop in, having at least the first two columns of the .fam file")
     argp.add_argument("--drop_missing_data", default=True, type=bool, help="should SNPs not present in the sample being dropped in be removed when doing the PCA? default True")
     argp.add_argument("--n_eigs", default=6, type=int, help="number of eigenvalues to compute, default 6")
+    argp.add_argument("--geno", default=0.05, type=float, help="what is the maximum per-SNP missingness allowed?")
     argp.add_argument("--LD_winsize", type=int, required=False, help="window size in SNPs - to pass to PLINK for indep-pairwise LD filter")
     argp.add_argument("--LD_stepsize", type=int, required=False, help="")
     argp.add_argument("--LD_r2", type=float, required=False, help="")
@@ -63,10 +64,10 @@ def make_PCA(i):
         # Keep individual i, and only the SNPs typed in that individual
         IND_df.to_csv(".KEEP.list", sep=" ", index=False, header=False)
         os.system("plink2 --bfile " + str(args.bfile) + " --keep .KEEP.list --geno 0 --make-bed --out .KEEP")
-        # Remove everyone else that needs to be dropped in, and keep only SNPs typed in individual i
-        os.system("plink2 --bfile " + str(args.bfile) + " --remove .REM.list --extract .KEEP.bim --make-bed --out .TEMP")
+        # Remove everyone else that needs to be dropped in, and keep only SNPs typed in individual i, apply overall missingness filter of 5%
+        os.system("plink2 --bfile " + str(args.bfile) + " --remove .REM.list --extract .KEEP.bim --geno " + args.geno + " --make-bed --out .TEMP")
     else:
-        os.system("plink2 --bfile " + str(args.bfile) + " --remove .REM.list --make-bed --out .TEMP")
+        os.system("plink2 --bfile " + str(args.bfile) + " --remove .REM.list --geno args.geno " + args.geno + "--make-bed --out .TEMP")
     if (args.LD_winsize is not None) & (args.LD_stepsize is not None) & (args.LD_r2 is not None):
         os.system("plink2 --bfile .TEMP --indep-pairwise " + str(args.LD_winsize) + " " + str(args.LD_stepsize) + " " + str(args.LD_r2) + " --out .LD_filter")
         os.system("plink2 --bfile .TEMP --extract .LD_filter.prune.in --make-bed --out .TEMP2")
