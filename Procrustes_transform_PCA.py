@@ -65,9 +65,9 @@ def make_PCA(i):
         IND_df.to_csv(".KEEP.list", sep=" ", index=False, header=False)
         os.system("plink2 --bfile " + str(args.bfile) + " --keep .KEEP.list --geno 0 --make-bed --out .KEEP")
         # Remove everyone else that needs to be dropped in, and keep only SNPs typed in individual i, apply overall missingness filter of 5%
-        os.system("plink2 --bfile " + str(args.bfile) + " --remove .REM.list --extract .KEEP.bim --geno " + args.geno + " --make-bed --out .TEMP")
+        os.system("plink2 --bfile " + str(args.bfile) + " --remove .REM.list --extract .KEEP.bim --geno " + str(args.geno) + " --make-bed --out .TEMP")
     else:
-        os.system("plink2 --bfile " + str(args.bfile) + " --remove .REM.list --geno args.geno " + args.geno + "--make-bed --out .TEMP")
+        os.system("plink2 --bfile " + str(args.bfile) + " --remove .REM.list --geno args.geno " + str(args.geno) + "--make-bed --out .TEMP")
     if (args.LD_winsize is not None) & (args.LD_stepsize is not None) & (args.LD_r2 is not None):
         os.system("plink2 --bfile .TEMP --indep-pairwise " + str(args.LD_winsize) + " " + str(args.LD_stepsize) + " " + str(args.LD_r2) + " --out .LD_filter")
         os.system("plink2 --bfile .TEMP --extract .LD_filter.prune.in --make-bed --out .TEMP2")
