@@ -4,7 +4,7 @@
 # The required argument is: Input (the stem of the .genome and .fam files)
 # The optional argument is: PI_HAT threshold - the minimum value of PI_HAT that defines a related pair (default 0.125)
 # USAGE:
-# $ Rscript flag_min_related_set.R CHABU 0.1 > min_relateds.list
+# $ Rscript flag_min_related_set.R CHABU 0.1
 
 #!/usr/bin/env Rscript
 args = commandArgs(trailingOnly=TRUE)
@@ -31,4 +31,4 @@ min.related.set <- function(kinship.data, pihat.max) {
   return(relateds)
 }
 
-min.related.set(KINSHIP.DAT, pihat.max)
+write.table(min.related.set(KINSHIP.DAT, pihat.max), quote=F, row.names=F, col.names=F)
