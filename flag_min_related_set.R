@@ -22,11 +22,11 @@ KINSHIP.DAT <- read.table(paste(args[1], "genome", sep="."), stringsAsFactors=F,
 
 min.related.set <- function(kinship.data, pihat.max) {
   relateds <- c()
-  relateds.data <- kinship.data[kinship.data[,"PI_HAT"]>pihat.max,]
-  while (nrow(relateds.data)>=1) {
+  relateds.data <- kinship.data[kinship.data$PI_HAT>pihat.max,]
+  while (nrow(relateds.data)>0) {
     ID <- names(which.max(table(c(relateds.data[,"IID1"], relateds.data[,"IID2"]))))
+    relateds[length(relateds)+1] <- ID
     relateds.data <- relateds.data[-c(grep(ID, relateds.data[,"IID1"]), grep(ID, relateds.data[,"IID2"])),]
-    relateds <- c(relateds, ID)
   }
   return(relateds)
 }
