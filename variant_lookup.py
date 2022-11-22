@@ -1,5 +1,5 @@
 ## SCRIPT: variant_lookup.py
-## AUTHOR: SSG
+## AUTHOR: Shyamalika Gopalan
 ## OVERVIEW: Returns a list of variant IDs (given genomic locations) or genomic positions (given variant IDs) based on a user-provided variant database in VCF format (eg. dbSNP)
 ## REQUIRED ARGUMENTS:
 ##         -l, --var_list (list of SNPs to look up, no header, whitespace delimited, 1 column for variant IDs, 2 columns for chromosome # and base pair position)
